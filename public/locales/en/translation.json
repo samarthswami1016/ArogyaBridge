@@ -1,0 +1,324 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "symptoms": "Symptoms",
+    "history": "History",
+    "firstaid": "First Aid",
+    "clinics": "Find Clinics",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "loginButton": "Sign In",
+    "registerButton": "Create Account",
+    "switchToRegister": "Don't have an account? Register",
+    "switchToLogin": "Already have an account? Login"
+  },
+  "dashboard": {
+    "welcome": "Hello, {{name}}! 🙏",
+    "subtitle": "Your digital health companion - for better healthcare",
+    "emergencyAlert": "Emergency? Call 108 immediately",
+    "emergencySubtext": "Always contact emergency services first in life-threatening situations",
+    "quickServices": "Quick Services",
+    "quickSymptomCheck": "Quick Symptom Check",
+    "quickSymptomDesc": "Describe your symptoms and get AI-powered guidance",
+    "voiceInput": "Voice Input",
+    "voiceInputDesc": "Use voice to describe your health concerns",
+    "findClinics": "Find Nearby Clinics",
+    "findClinicsDesc": "Locate healthcare facilities near you",
+    "firstAid": "Emergency First Aid",
+    "firstAidDesc": "Emergency first aid tips and guidance",
+    "recentActivity": "Recent Activity",
+    "viewFullHistory": "View Full History",
+    "stats": {
+      "healthconsultations": "Health Consultations",
+      "consultationsChange": "+3 this month",
+      "nearbyclinics": "Nearby Clinics",
+      "clinicsChange": "Within 5km",
+      "emergencycontacts": "Emergency Contacts",
+      "contactsChange": "Ready to call",
+      "healthscore": "Health Score",
+      "scoreChange": "+5% improvement"
+    },
+    "activities": {
+      "symptomCheck": "Symptom check: Headache",
+      "symptomCheckDesc": "AI advised rest and hydration • 2 hours ago",
+      "clinicsFound": "3 nearby clinics found",
+      "clinicsFoundDesc": "Located health facilities • Yesterday",
+      "contactUpdated": "Emergency contact updated",
+      "contactUpdatedDesc": "Added family member details • 3 days ago"
+    }
+  },
+  "symptoms": {
+    "title": "AI Health Assistant",
+    "subtitle": "Get instant health advice",
+    "online": "Online",
+    "emergencyBanner": "Emergency? Call 108 immediately",
+    "emergencySubtext": "Contact emergency services first in life-threatening situations",
+    "commonSymptoms": "Common Symptoms:",
+    "inputPlaceholder": "Describe your symptoms here...",
+    "analyzing": "Analyzing...",
+    "aiPowered": "AI Powered",
+    "instantResponse": "Instant Response",
+    "initialMessage": "Hello! I'm your AI health assistant. Please describe your symptoms, and I'll provide guidance. You can type or use voice input.",
+    "quickSymptoms": {
+      "headache": "Headache",
+      "fever": "Fever",
+      "cough": "Cough",
+      "stomachache": "Stomach Pain",
+      "breathingDifficulty": "Breathing Difficulty",
+      "dizziness": "Dizziness"
+    },
+    "severity": {
+      "emergency": "Emergency",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Mild"
+    },
+    "responses": {
+      "emergency": "🚨 EMERGENCY: Your symptoms indicate a potential medical emergency. Please call 108 immediately or go to the nearest hospital. Do not delay seeking medical help.",
+      "high": "⚠️ High Priority: Your symptoms require medical attention. Please consult a doctor within 24 hours. Monitor your condition closely.",
+      "medium": "📋 Moderate Concern: Your symptoms should be evaluated by a healthcare provider. Consider scheduling a doctor's appointment within 2-3 days.",
+      "low": "✅ Mild Symptoms: Your symptoms appear minor. Rest, stay hydrated, and consult a doctor if symptoms persist.",
+      "generalAdvice": "\n\nGeneral Suggestions:\n• Drink plenty of water\n• Get adequate rest\n• Monitor your symptoms\n• Seek immediate medical attention if symptoms worsen"
+    }
+  },
+  "history": {
+    "title": "Health History",
+    "subtitle": "Your previous health consultations",
+    "records": "records",
+    "filters": {
+      "all": "All",
+      "emergency": "Emergency",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Mild"
+    },
+    "noRecords": "No Records Found",
+    "noRecordsDesc": "No health records available in this category",
+    "detailedReport": "Detailed Report",
+    "symptoms": "Symptoms:",
+    "aiSuggestion": "AI Suggestion:",
+    "date": "Date"
+  },
+  "firstaid": {
+    "title": "First Aid",
+    "subtitle": "Immediate help in emergency situations",
+    "emergencyBanner": "Call 108 immediately for serious emergencies",
+    "emergencySubtext": "Get medical help along with first aid",
+    "searchPlaceholder": "Search first aid...",
+    "stepsCount": "{{count}} step",
+    "minutes": "minutes",
+    "stepByStep": "Step-by-step guide",
+    "stepsCount_plural": "{{count}} steps",
+    "categories": {
+      "all": "All",
+      "emergency": "Emergency",
+      "injury": "Injury",
+      "common": "Common"
+    },
+    "noResults": "No Results Found",
+    "noResultsDesc": "Please try different search terms or categories",
+    "stepByStep": "Step-by-step Instructions:",
+    "important": "Important: Seek immediate medical help for serious conditions!",
+    "priority": {
+      "high": "High Priority",
+      "medium": "Medium Priority",
+      "low": "Low Priority"
+    },
+    "tips": {
+      "heartAttack": {
+        "title": "Heart Attack",
+        "description": "Immediate first aid for chest pain and breathing difficulty",
+        "steps": [
+          "Seat the person in a comfortable position",
+          "Call 108 immediately",
+          "Give aspirin if available (with doctor's advice)",
+          "Keep the person calm and don't panic",
+          "Start CPR if person becomes unconscious"
+        ]
+      },
+      "bleeding": {
+        "title": "Cuts and Bleeding",
+        "description": "How to stop bleeding from cuts and wounds",
+        "steps": [
+          "Press the wound with clean cloth",
+          "Elevate the injured part",
+          "Maintain pressure until bleeding stops",
+          "Clean wound with clean water",
+          "Apply antiseptic and bandage"
+        ]
+      },
+      "burns": {
+        "title": "Burns",
+        "description": "Immediate treatment for burns from fire, hot water or chemicals",
+        "steps": [
+          "Immediately rinse burned area with cold water",
+          "Continue cold water for 10-15 minutes",
+          "Do not use ice",
+          "Cover burned area with clean cloth",
+          "See doctor immediately for severe burns"
+        ]
+      },
+      "choking": {
+        "title": "Choking",
+        "description": "Immediate help when something is stuck in throat",
+        "steps": [
+          "Encourage the person to cough",
+          "Give 5 sharp blows to the back",
+          "If that doesn't work, perform Heimlich maneuver",
+          "Apply upward pressure on abdomen",
+          "Start CPR if person becomes unconscious"
+        ]
+      },
+      "fainting": {
+        "title": "Fainting",
+        "description": "What to do when someone suddenly faints",
+        "steps": [
+          "Lay person flat on ground",
+          "Elevate legs slightly",
+          "Loosen collar and belt",
+          "Fan the face",
+          "Sit up slowly when conscious"
+        ]
+      },
+      "sprain": {
+        "title": "Sprain",
+        "description": "How to reduce pain and swelling from sprains",
+        "steps": [
+          "Rest the sprained area",
+          "Apply ice pack for 15-20 minutes",
+          "Apply gentle pressure with elastic bandage",
+          "Keep sprained area elevated",
+          "Can take pain relief medication"
+        ]
+      }
+    }
+  },
+  "clinics": {
+    "title": "Nearby Clinics",
+    "subtitle": "Healthcare facilities around you",
+    "results": "results",
+    "loading": "Searching for nearby clinics...",
+    "searchPlaceholder": "Search clinics or services...",
+    "types": {
+      "all": "All",
+      "hospital": "Hospital",
+      "clinic": "Clinic",
+      "pharmacy": "Pharmacy",
+      "diagnostic": "Diagnostic Center"
+    },
+    "noResults": "No Clinics Found",
+    "noResultsDesc": "Please try different search terms or categories",
+    "open": "Open",
+    "closed": "Closed",
+    "direction": "Direction",
+    "call": "Call",
+    "more": "more",
+    "mockData": {
+      "cityHospital": {
+        "name": "City Hospital",
+        "address": "Main Market, Sector 15, Noida",
+        "hours": "Open 24 hours",
+        "services": ["Emergency", "Surgery", "ICU", "Lab"]
+      },
+      "drSharmaClinic": {
+        "name": "Dr. Sharma Clinic",
+        "address": "Gandhi Nagar, Block A, Ghaziabad",
+        "hours": "9:00 AM - 9:00 PM",
+        "services": ["General Medicine", "Pediatrics", "Gynecology"]
+      },
+      "apolloPharmacy": {
+        "name": "Apollo Pharmacy",
+        "address": "Nehru Place, Delhi",
+        "hours": "8:00 AM - 11:00 PM",
+        "services": ["Medicines", "Health Products", "Home Delivery"]
+      },
+      "lifeCareDiagnostic": {
+        "name": "Life Care Diagnostic",
+        "address": "Connaught Place, New Delhi",
+        "hours": "7:00 AM - 7:00 PM",
+        "services": ["X-Ray", "Ultrasound", "Blood Test", "ECG"]
+      },
+      "maxHospital": {
+        "name": "Max Super Specialty",
+        "address": "Saket, New Delhi",
+        "hours": "Open 24 hours",
+        "services": ["Cardiology", "Neurology", "Oncology", "Transplant"]
+      },
+      "careClinic": {
+        "name": "Care Clinic",
+        "address": "Lajpat Nagar, Delhi",
+        "hours": "10:00 AM - 8:00 PM",
+        "services": ["Dental", "Eye Checkup", "Physiotherapy"]
+      }
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your health information",
+    "edit": "Edit",
+    "save": "Save",
+    "personalInfo": "Personal Information",
+    "emergencyContacts": "Emergency Contacts",
+    "medicalConditions": "Medical Conditions",
+    "allergies": "Allergies",
+    "medications": "Medications",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "age": "Age",
+    "gender": "Gender",
+    "bloodGroup": "Blood Group",
+    "add": "Add",
+    "addNew": "Add New",
+    "newContact": "Add New Contact",
+    "name": "Name",
+    "relationship": "Relationship",
+    "selectRelationship": "Select Relationship",
+    "newCondition": "New Condition",
+    "newAllergy": "New Allergy",
+    "newMedication": "New Medication",
+    "years": "years",
+    "genders": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "relationships": [
+      "Spouse",
+      "Parent",
+      "Sibling",
+      "Child",
+      "Friend",
+      "Family Doctor",
+      "Other"
+    ]
+  },
+  "voice": {
+    "title": "Voice Symptom Input",
+    "description": "Describe your symptoms by speaking. Our AI will analyze and provide guidance.",
+    "startRecording": "Start Recording",
+    "stopRecording": "Stop Recording",
+    "listening": "Listening...",
+    "processing": "Processing..."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "user": "User"
+  }
+}
