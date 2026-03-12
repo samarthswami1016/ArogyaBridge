@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Phone, Mail, Calendar, Heart, Shield, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface UserProfile {
   full_name: string;
@@ -50,29 +51,64 @@ const ProfilePage: React.FC = () => {
   const [newMedication, setNewMedication] = useState('');
 
   useEffect(() => {
-    const mockProfile: UserProfile = {
-      full_name: user?.user_metadata?.full_name || t('common.user'),
-      email: user?.email || '',
-      phone: '+91 98765 43210',
-      age: 35,
-      gender: 'male',
-      blood_group: 'O+',
-      emergency_contacts: [
-        { id: '1', name: 'Ram Sharma', relationship: t('profile.relationships.0'), phone: '+91 98765 43211' },
-        { id: '2', name: 'Dr. Agarwal', relationship: t('profile.relationships.5'), phone: '+91 98765 43212' }
-      ],
-      medical_conditions: ['Hypertension', 'Diabetes Type 2'],
-      allergies: ['Penicillin', 'Peanuts'],
-      medications: ['Metformin 500mg', 'Lisinopril 10mg']
+    if (!user) return;
+
+    // Initial fetch
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (data && !error) {
+        setProfile({
+          full_name: data.full_name || user?.user_metadata?.full_name || t('common.user'),
+          email: data.email || user?.email || '',
+          phone: data.phone || '',
+          age: data.age || undefined,
+          gender: data.gender || undefined,
+          blood_group: data.blood_group || '',
+          emergency_contacts: data.emergency_contacts || [],
+          medical_conditions: data.medical_conditions || [],
+          allergies: data.allergies || [],
+          medications: data.medications || []
+        });
+      }
     };
-    setProfile(mockProfile);
+    fetchProfile();
+
+    // Supabase Realtime subscription
+    const channel = supabase
+      .channel(`public:profiles:id=eq.${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+        const newData = payload.new as any;
+        if (newData) {
+          setProfile(prev => ({
+            ...prev,
+            ...newData
+          }));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, t]);
 
-  const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-
-  const handleSave = () => {
-    console.log('Saving profile:', profile);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        ...profile
+      });
+      if (error) console.error("Error saving profile:", error);
+      else setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const addEmergencyContact = () => {
@@ -132,11 +168,10 @@ const ProfilePage: React.FC = () => {
             </div>
             <button
               onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                isEditing 
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white'
-              }`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${isEditing
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                }`}
             >
               {isEditing ? <Save className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
               <span>{isEditing ? t('profile.save') : t('profile.edit')}</span>
@@ -148,14 +183,14 @@ const ProfilePage: React.FC = () => {
       {/* Profile Content */}
       <div className="flex-1 overflow-y-auto hide-scrollbar">
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          
+
           {/* Basic Information */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <User className="h-5 w-5 mr-2 text-purple-600" />
               {t('profile.personalInfo')}
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t('profile.fullName')}</label>
@@ -299,7 +334,7 @@ const ProfilePage: React.FC = () => {
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="">{t('profile.selectRelationship')}</option>
-                    {t('profile.relationships', { returnObjects: true }).map((rel: string) => (
+                    {(t('profile.relationships', { returnObjects: true }) as string[]).map((rel: string) => (
                       <option key={rel} value={rel}>{rel}</option>
                     ))}
                   </select>

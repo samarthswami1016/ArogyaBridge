@@ -22,6 +22,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setLoading(true);
     setError('');
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
       await signIn(email, password);
     } catch (err: any) {

@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Send,
   Bot,
-  User,
   AlertCircle,
   CheckCircle,
   Mic,
@@ -13,6 +12,10 @@ import {
   Clock,
   Activity,
 } from 'lucide-react';
+
+import ReactMarkdown from 'react-markdown';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -24,6 +27,7 @@ interface Message {
 
 const SymptomsPage: React.FC = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const [messages, setMessages] = useState<Message[]>(() => [
     {
@@ -37,7 +41,7 @@ const SymptomsPage: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () =>
@@ -72,64 +76,97 @@ const SymptomsPage: React.FC = () => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
       return {
-        response: t('symptoms.responses.error', 'AI unavailable. Please consult a doctor.'),
+        response: 'AI unavailable. Please consult a doctor.',
         severity: 'medium',
       };
     }
 
-    const prompt = `
-You are an Indian medical assistant.  
-User says: "${symptoms}"
-
-Reply in plain English (≤ 150 words).  
-End your reply with exactly one of these lines on a new line:
-**emergency**  
-**high**  
-**medium**  
-**low**
-`;
+    // Exactly mirrors the working Android Java GeminiService prompt construction
+    const promptText =
+      `You are an expert AI medical triage assistant for ArogyaBridge, a healthcare PWA.\n\n` +
+      `SAFETY DISCLAIMER: This AI is not a doctor. Always advise users to consult a qualified healthcare professional.\n\n` +
+      `Format every response using Markdown so it is clean and structured.\n\n` +
+      `Use the following format:\n\n` +
+      `### 🩺 Possible Conditions\n\nBrief explanation (state clearly this is NOT a diagnosis)\n\n` +
+      `### ❓ Clarifying Questions\n\n• bullet points (if needed)\n\n` +
+      `### ✅ Recommended Next Step\n\none of: Rest at home / Visit a clinic soon / Seek emergency help immediately\n\n` +
+      `### 💊 General Advice\n\n• bullet points\n\n` +
+      `Keep answers clear, empathetic, and under 200 words. Do NOT hallucinate medical advice.\n` +
+      `End your reply with EXACTLY one of these severity tags on a new line:\n` +
+      `SEVERITY:low\nSEVERITY:medium\nSEVERITY:high\nSEVERITY:emergency\n\n` +
+      `Patient symptoms: ${symptoms}`;
 
     try {
-      const model = 'gemini-2.0-flash';
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: promptText }]
+              }
+            ]
+          }),
         }
       );
 
-      if (!res.ok) throw new Error(res.statusText);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('Gemini API Error:', errText);
+        throw new Error(`API Error ${res.status}: ${res.statusText}`);
+      }
 
       const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-      const lines = text.trim().split('\n');
-      const severityLine = lines.pop()?.trim().toLowerCase();
-      const responseBody = lines.join('\n').trim();
+      if (!text) throw new Error('Empty response from Gemini');
 
+      // Extract severity tag from response
+      const severityMatch = text.match(/SEVERITY:(low|medium|high|emergency)/i);
       let severity: 'low' | 'medium' | 'high' | 'emergency' = 'low';
-      if (severityLine === 'emergency') severity = 'emergency';
-      else if (severityLine === 'high') severity = 'high';
-      else if (severityLine === 'medium') severity = 'medium';
+      if (severityMatch) {
+        severity = severityMatch[1].toLowerCase() as any;
+      }
+
+      // Remove the severity tag line from the visible response
+      const responseBody = text.replace(/SEVERITY:(low|medium|high|emergency)/gi, '').trim();
 
       return {
-        response: responseBody || t('symptoms.responses.error', 'Unable to analyse symptoms.'),
+        response: responseBody || 'Unable to analyse symptoms. Please consult a doctor.',
         severity,
       };
     } catch (err) {
-      console.error(err);
+      console.error('Gemini fetch error:', err);
       return {
-        response: t('symptoms.responses.error', 'Unable to analyse symptoms. Please consult a doctor.'),
+        response: 'Unable to analyse symptoms. Please consult a doctor.',
         severity: 'medium',
       };
     }
   };
 
   /* ---------------- Handlers ---------------- */
+  const [lastMessageTime, setLastMessageTime] = useState<number>(0);
+
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || isProcessing) return;
+
+    const now = Date.now();
+    if (now - lastMessageTime < 5000) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          type: 'ai',
+          content: 'Please wait a few seconds before sending another message.',
+          timestamp: new Date(),
+          severity: 'low',
+        },
+      ]);
+      return;
+    }
+    setLastMessageTime(now);
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -151,6 +188,15 @@ End your reply with exactly one of these lines on a new line:
         severity,
       };
       setMessages((prev) => [...prev, aiMsg]);
+
+      if (user) {
+        await supabase.from('symptom_checks').insert({
+          user_id: user.id,
+          symptoms: content,
+          ai_response: response,
+          severity: severity
+        });
+      }
     } catch {
       const errMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -306,29 +352,37 @@ End your reply with exactly one of these lines on a new line:
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-md p-4 rounded-2xl shadow-sm ${
-                    msg.type === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-md'
-                      : `rounded-bl-md border ${getSeverityBg(msg.severity)}`
-                  }`}
+                  className={`max-w-[85%] sm:max-w-md p-4 rounded-2xl shadow-sm ${msg.type === 'user'
+                    ? 'bg-blue-600 text-white rounded-br-md'
+                    : `rounded-bl-md border ${getSeverityBg(msg.severity)}`
+                    }`}
                 >
                   <div className="flex items-start space-x-2">
                     {msg.type === 'ai' && (
                       <div className="flex-shrink-0 mt-1">{getSeverityIcon(msg.severity)}</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-sm whitespace-pre-wrap leading-relaxed ${
-                          msg.type === 'user' ? 'text-white' : 'text-gray-900'
-                        }`}
-                      >
-                        {msg.content}
-                      </p>
+                      {msg.type === 'user' ? (
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed text-white">
+                          {msg.content}
+                        </p>
+                      ) : (
+                        <div className="text-sm leading-relaxed text-gray-900 prose prose-sm max-w-none
+                          prose-headings:font-bold prose-headings:text-gray-900 prose-headings:mt-2 prose-headings:mb-1
+                          prose-h3:text-base prose-h2:text-base
+                          prose-p:my-1 prose-p:leading-relaxed
+                          prose-ul:my-1 prose-ul:pl-4 prose-li:my-0.5
+                          prose-ol:my-1 prose-ol:pl-4
+                          prose-strong:text-gray-800 prose-strong:font-semibold
+                          prose-em:text-gray-700
+                          prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-code:text-xs">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-2">
                         <p
-                          className={`text-xs ${
-                            msg.type === 'user' ? 'text-blue-200' : 'text-gray-500'
-                          }`}
+                          className={`text-xs ${msg.type === 'user' ? 'text-blue-200' : 'text-gray-500'
+                            }`}
                         >
                           {msg.timestamp.toLocaleTimeString('en-US', {
                             hour: '2-digit',
@@ -337,15 +391,14 @@ End your reply with exactly one of these lines on a new line:
                         </p>
                         {msg.severity && (
                           <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              msg.severity === 'emergency'
-                                ? 'bg-red-100 text-red-700'
-                                : msg.severity === 'high'
+                            className={`text-xs px-2 py-1 rounded-full ${msg.severity === 'emergency'
+                              ? 'bg-red-100 text-red-700'
+                              : msg.severity === 'high'
                                 ? 'bg-orange-100 text-orange-700'
                                 : msg.severity === 'medium'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-green-100 text-green-700'
-                            }`}
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}
                           >
                             {t(`symptoms.severity.${msg.severity}`, msg.severity)}
                           </span>
@@ -403,13 +456,12 @@ End your reply with exactly one of these lines on a new line:
               type="button"
               onClick={isListening ? stopListening : startListening}
               disabled={isProcessing}
-              className={`relative p-3 rounded-full transition-all duration-300 ${
-                isListening
-                  ? 'bg-red-500 hover:bg-red-600 text-white scale-110'
-                  : isProcessing
+              className={`relative p-3 rounded-full transition-all duration-300 ${isListening
+                ? 'bg-red-500 hover:bg-red-600 text-white scale-110'
+                : isProcessing
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:scale-105'
-              }`}
+                }`}
             >
               {isProcessing ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import AuthPage from './components/Auth/AuthPage';
 import Navigation from './components/Navigation';
-import Dashboard from './pages/Dashboard';
-import SymptomsPage from './pages/SymptomsPage';
-import HistoryPage from './pages/HistoryPage';
-import FirstAidPage from './pages/FirstAidPage';
-import ClinicsPage from './pages/ClinicsPage';
-import ProfilePage from './pages/ProfilePage';
+import { InstallPrompt } from './components/InstallPrompt';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const SymptomsPage = lazy(() => import('./pages/SymptomsPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const FirstAidPage = lazy(() => import('./pages/FirstAidPage'));
+const ClinicsPage = lazy(() => import('./pages/ClinicsPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -52,8 +54,15 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <InstallPrompt />
       <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
-      {renderPage()}
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      }>
+        {renderPage()}
+      </Suspense>
     </div>
   );
 };

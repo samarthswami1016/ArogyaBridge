@@ -16,7 +16,7 @@ const AuthPage: React.FC = () => {
         <LanguageSwitcher />
       </div>
 
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row min-h-screen">
         {/* Left Side - Branding and Features */}
         <div className="lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-8 lg:p-12 flex flex-col justify-center">
           <div className="max-w-md mx-auto lg:max-w-none">
@@ -24,7 +24,7 @@ const AuthPage: React.FC = () => {
               <Heart className="h-12 w-12 text-red-400" />
               <h1 className="text-3xl lg:text-4xl font-bold">ArogyaBridge</h1>
             </div>
-            
+
             <p className="text-xl lg:text-2xl mb-8 text-blue-100">
               Connecting rural communities to quality healthcare through technology
             </p>
@@ -65,8 +65,8 @@ const AuthPage: React.FC = () => {
                 {isLogin ? t('auth.login') : t('auth.register')}
               </h2>
               <p className="text-gray-600">
-                {isLogin 
-                  ? 'Access your health companion' 
+                {isLogin
+                  ? 'Access your health companion'
                   : 'Create your account to get started'
                 }
               </p>

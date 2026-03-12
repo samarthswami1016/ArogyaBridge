@@ -1,20 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Stethoscope, 
-  Mic, 
-  MapPin, 
-  Heart, 
-  History, 
+import {
+  Stethoscope,
+  Mic,
+  MapPin,
+  Heart,
   Phone,
-  AlertTriangle,
-  Clock,
-  Activity,
-  Shield,
-  Users,
-  Zap
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
   onPageChange: (page: string) => void;
@@ -23,6 +18,94 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+
+  const [stats, setStats] = useState({
+    consultations: 0,
+    nearbyClinics: 'Searching...' as string | number,
+    emergencyContacts: 0,
+    healthScore: 85,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchSupabaseStats = async () => {
+      // Fetch symptom checks count — gracefully handle if table doesn't exist yet
+      const { data: checks, error: checksErr } = await supabase
+        .from('symptom_checks')
+        .select('id')
+        .eq('user_id', user.id);
+      if (checksErr) console.warn('symptom_checks not ready:', checksErr.message);
+      const numConsultations = checks ? checks.length : 0;
+
+      // Fetch emergency contacts count — gracefully handle if table/column doesn't exist
+      const { data: profile, error: profileErr } = await supabase
+        .from('profiles')
+        .select('emergency_contacts')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profileErr) console.warn('profiles not ready:', profileErr.message);
+      const numContacts = Array.isArray(profile?.emergency_contacts) ? profile.emergency_contacts.length : 0;
+
+      // Calculate health score dynamically
+      const score = Math.min(100, Math.max(0, 80 + numConsultations * 2));
+
+      setStats(prev => ({
+        ...prev,
+        consultations: numConsultations,
+        emergencyContacts: numContacts,
+        healthScore: score
+      }));
+    };
+
+    fetchSupabaseStats();
+
+    // Supabase Real-time updates
+    const channel = supabase.channel('dashboard_updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'symptom_checks', filter: `user_id = eq.${user.id} ` }, () => {
+        fetchSupabaseStats();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id = eq.${user.id} ` }, () => {
+        fetchSupabaseStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const query = `[out:json]; (node["amenity"~"hospital|clinic|pharmacy"](around: 5000, ${lat}, ${lng}); way["amenity"~"hospital|clinic|pharmacy"](around: 5000, ${lat}, ${lng}); relation["amenity"~"hospital|clinic|pharmacy"](around: 5000, ${lat}, ${lng}););out center; `;
+
+          const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+          if (!response.ok) {
+            console.warn(`Overpass API returned status: ${response.status}`);
+            throw new Error(`Overpass API failed with status ${response.status}`);
+          }
+
+          const data = await response.json();
+          let count = 0;
+          if (data && data.elements) {
+            count = data.elements.filter((e: any) => e.tags && e.tags.amenity).length;
+          }
+          setStats(prev => ({ ...prev, nearbyClinics: count }));
+        } catch (error) {
+          console.error("Error fetching clinics", error);
+          setStats(prev => ({ ...prev, nearbyClinics: 'API Error' }));
+        }
+      }, () => {
+        setStats(prev => ({ ...prev, nearbyClinics: 'Location Denied' }));
+      });
+    } else {
+      setStats(prev => ({ ...prev, nearbyClinics: 'N/A' }));
+    }
+  }, []);
 
   const quickActions = [
     {
@@ -70,16 +153,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
   const statsCards = [
     {
       title: 'Health Consultations',
-      value: '12',
+      value: stats.consultations.toString(),
       icon: Stethoscope,
-      change: '+3 this month',
+      change: 'Recent queries',
       color: 'text-blue-600',
       bg: 'bg-white',
       border: 'border-gray-200'
     },
     {
       title: 'Nearby Clinics',
-      value: '8',
+      value: stats.nearbyClinics.toString(),
       icon: MapPin,
       change: 'Within 5km',
       color: 'text-green-600',
@@ -88,18 +171,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
     },
     {
       title: 'Emergency Contacts',
-      value: '3',
+      value: stats.emergencyContacts.toString(),
       icon: Phone,
-      change: 'Ready to call',
+      change: 'Saved on profile',
       color: 'text-orange-600',
       bg: 'bg-white',
       border: 'border-gray-200'
     },
     {
       title: 'Health Score',
-      value: '85%',
+      value: `${stats.healthScore}%`,
       icon: Heart,
-      change: '+5% improvement',
+      change: 'Based on activity',
       color: 'text-red-600',
       bg: 'bg-white',
       border: 'border-gray-200'
